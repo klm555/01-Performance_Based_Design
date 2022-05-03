@@ -71,7 +71,7 @@ section_name = pd.read_csv(H1_DE11_raw_txt, skiprows=7, error_bad_lines=False, h
 section_name.reset_index(drop=True, inplace=True)
 section_name.name = 'Name'
 
-if input_wall_name == 'all':
+# if input_wall_name == 'all':
     
 # Section으로 지정한 각 층을 추출하기 (이름의 형태에 따라 달라질수있음!!!)
 floor = []
@@ -145,7 +145,7 @@ plt.grid(linestyle='-.')
 plt.xlabel('Shear Force(kN)')
 plt.ylabel('Story')
 plt.legend(loc=1, fontsize=8)
-plt.title(input_wall_name.split('_')[0])
+plt.title(input_wall_name.split('_')[0] + ' (X-Dir.)')
 # plt.savefig(data_path + '\\' + 'Story_SF_H1_DE')
 
 
@@ -167,7 +167,7 @@ plt.grid(linestyle='-.')
 plt.xlabel('Shear Force(kN)')
 plt.ylabel('Story')
 plt.legend(loc=1, fontsize=8)
-plt.title(input_wall_name.split('_')[0])
+plt.title(input_wall_name.split('_')[0] + ' (Y-Dir.)')
 # plt.savefig(data_path + '\\' + 'Story_SF_H2_DE')
 
 ### H1_MCE
@@ -188,7 +188,7 @@ plt.grid(linestyle='-.')
 plt.xlabel('Shear Force(kN)')
 plt.ylabel('Story')
 plt.legend(loc=1, fontsize=8)
-plt.title(input_wall_name.split('_')[0])
+plt.title(input_wall_name.split('_')[0] + ' (X-Dir.)')
 # plt.savefig(data_path + '\\' + 'Story_SF_H1_MCE')
 
 # H2_MCE
@@ -209,7 +209,7 @@ plt.grid(linestyle='-.')
 plt.xlabel('Shear Force(kN)')
 plt.ylabel('Story')
 plt.legend(loc=1, fontsize=8)
-plt.title(input_wall_name.split('_')[0])
+plt.title(input_wall_name.split('_')[0] + ' (Y-Dir.)')
 # plt.savefig(data_path + '\\' + 'Story_SF_H2_MCE')
 
 

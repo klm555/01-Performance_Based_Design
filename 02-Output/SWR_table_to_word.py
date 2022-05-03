@@ -1,6 +1,20 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import numpy as np
+import timeit
+import math
+from io import BytesIO
+
+import docx
+from docx.shared import Pt
+from docx.shared import RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.shared import Cm
+from docx.oxml.ns import qn
+from docx.oxml.ns import nsdecls
+from docx.oxml import parse_xml
 
 #%% 사용자 입력
 # 지진파 개수
@@ -26,6 +40,10 @@ input_raw_xlsx = 'Data Conversion_Shear Wall Type_Ver.1.0.xlsx'
 
 # 그림 저장 경로 설정
 output_figure_dir = data_path
+
+# 생성할 부록 정보
+SWR_word_dir = r'C:\Users\hwlee\Desktop\Python\내진성능설계'
+SWR_word_name = '지진파별 벽체 회전각(test).docx'
 
 #%% Analysis Result 불러오기
 to_load_list = []
@@ -108,6 +126,7 @@ for Variable_name in Variable_names:
 # SWR_avg_total = SWR_avg_total.drop(SWR_avg_total[(SWR_avg_total.iloc[:,4] < -0.0035) | (SWR_avg_total.iloc[:,3] > 0.0035)].index) # MCE
 
 #%% 그래프
+plt.ion()
 
 # DE 그래프
 plt.figure(1, figsize=(4,5))
@@ -147,30 +166,6 @@ plt.ylabel('Story')
 plt.tight_layout()
 plt.savefig(output_figure_dir + '\\' + 'SWR_MCE')
 
-# 지진파별 그래프
-count = 1
-for i in Variable_names:
-    plt.figure(count, figsize=(4,5))
-    plt.xlim(-0.005, 0.005)
-    plt.scatter(SWR_total.iloc[:, count-1], SWR_avg_total['Height'], color = 'k', s=1) # s=1 : point size
-    plt.scatter(SWR_total.iloc[:, count-1+28], SWR_avg_total['Height'], color = 'k', s=1)
-
-    # height값에 대응되는 층 이름으로 y축 눈금 작성
-    plt.yticks(story_info['Height(mm)'][::-story_yticks], story_name[::-story_yticks])
-
-    # reference line 그려서 허용치 나타내기
-    plt.axvline(x= min_criteria_DE, color='r', linestyle='--')
-    plt.axvline(x= max_criteria_DE, color='r', linestyle='--')
-
-    plt.grid(linestyle='-.')
-    plt.title('{}'.format(i))
-    plt.xlabel('Wall Rotation(rad)')
-    plt.ylabel('Story')
-
-    plt.tight_layout()
-    count += 1
-
-plt.show()
 
 #%% 결과 확인할때 필요한 함수들
 # 기준 점 넘는 node 찾는 함수
@@ -225,3 +220,82 @@ error_MCE_coord = pd.merge(error_MCE_coord, story_info, how='left', left_on='Z',
 
 error_DE_coord = pd.concat((error_DE_coord.iloc[:,[0,1,2,4]], pd.Series(error_DE_index[1], name='Value')), axis=1)
 error_MCE_coord = pd.concat((error_MCE_coord.iloc[:,[0,1,2,4]], pd.Series(error_MCE_index[1], name='Value')), axis=1)
+
+#%% 부록(부재별 SWR)
+# Document 생성
+SWR_word = docx.Document()
+
+# 제목
+title_para = SWR_word.add_paragraph()
+title_run = title_para.add_run('A. 지진파별 벽체 회전각').font.size = Pt(11)
+
+# 표 삽입
+SWR_table = SWR_word.add_table(math.ceil(len(Variable_names)/2), 2)
+SWR_table_faster = SWR_table._cells
+
+# # Header 행 추가
+# for i in range(DCR_output.shape[1]):
+#     header_para = DCR_table_faster[i].paragraphs[0]
+#     header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+#     DCR_table_faster[i].width = Cm(2)
+    
+#     header_run = header_para.add_run(DCR_output.columns[i])
+#     # header_run.bold = True
+#     header_run.font.size = Pt(10)
+    
+#     shading_elm = parse_xml(r'<w:shd {} w:fill="F2F2F2"/>'.format(nsdecls('w')))
+#     DCR_table_faster[i]._tc.get_or_add_tcPr().append(shading_elm)
+
+  
+# 지진파별 그래프
+plt.ioff()
+count = 3
+
+for i in Variable_names:
+        
+    memfile = BytesIO()
+    
+    plt.figure(count, figsize=(4,5))
+    plt.xlim(-0.005, 0.005)
+    plt.scatter(SWR_total.iloc[:, count-3], SWR_avg_total['Height'], color = 'k', s=1) # s=1 : point size
+    plt.scatter(SWR_total.iloc[:, count-3+28], SWR_avg_total['Height'], color = 'k', s=1)
+
+    # height값에 대응되는 층 이름으로 y축 눈금 작성
+    plt.yticks(story_info['Height(mm)'][::-story_yticks], story_name[::-story_yticks])
+
+    # reference line 그려서 허용치 나타내기
+    plt.axvline(x= min_criteria_DE, color='r', linestyle='--')
+    plt.axvline(x= max_criteria_DE, color='r', linestyle='--')
+
+    plt.grid(linestyle='-.')
+    plt.title('{}'.format(i))
+    plt.xlabel('Wall Rotation(rad)')
+    plt.ylabel('Story')
+
+    plt.tight_layout()
+    plt.savefig(memfile)
+    
+    SWR_table_faster_para = SWR_table_faster[count-3].paragraphs[0]
+    SWR_table_faster_run = SWR_table_faster_para.add_run()
+    SWR_table_faster_run.add_picture(memfile, height=Cm(9.5))
+    
+    # SWR_table_faster[count-3].add_picture(memfile)
+    
+    memfile.close()
+    
+    count += 1
+
+
+# Table 스타일  
+SWR_table.style = 'LightGrid'
+SWR_table.autofit = False
+SWR_table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+# 스타일 지정(global)
+SWR_word_style = SWR_word.styles['Normal']
+SWR_word_style.font.name = '맑은 고딕'
+SWR_word_style._element.rPr.rFonts.set(qn('w:eastAsia'), '맑은 고딕') # 한글 폰트를 따로 설정해 준다
+SWR_word_style.font.size = Pt(8) 
+        
+# 저장~
+SWR_word.save(SWR_word_dir + '\\' + SWR_word_name)

@@ -21,7 +21,7 @@ time_start = timeit.default_timer()
 
 # Wall input 정보 (xlsx)
 wall_raw_xlsx_dir = r'D:\이형우\내진성능평가\송도 B5\B동'
-wall_raw_xlsx = 'Input Sheets(B)_plate modified_조작.xlsx'
+wall_raw_xlsx = 'Input Sheets(B)_plate modified_조작_보강_1.2.xlsx'
 
 wall_raw_xlsx_sheet = 'Wall'
 story_info_xlsx_sheet = 'Story Info'
